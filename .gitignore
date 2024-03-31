@@ -1,0 +1,5 @@
+bin
+resource.syso
+*.ini
+*.exe
+mobs.json
