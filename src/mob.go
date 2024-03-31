@@ -106,41 +106,41 @@ func loadMobsConfig() {
 	mobsConfig = nil
 	mobsConfig = make(map[string]*MobConfig)
 
+	var aux []*MobConfig
+
 	file, err := os.Open("mobs.json")
 	if err != nil {
 		if os.IsNotExist(err) {
-			log.Println("Config file does not exist. Creating a new one.")
-			mobsConfig = nil
-			createMobsConfig()
+			mob := &MobConfig{
+				Name:          "poring",
+				Speed:         1.3,
+				IdleFrametime: 6,
+				WalkFrametime: 3,
+				Rarity:        1,
+			}
+			aux = append(aux, mob)
+			createMobsConfig(aux)
+		} else {
+			panic(err)
 		}
 	} else {
 		decoder := json.NewDecoder(file)
-		var aux []*MobConfig
 		err = decoder.Decode(&aux)
 		if err != nil {
 			panic(err)
 		}
-		for _, mob := range aux {
-			mobsConfig[mob.Name] = mob
-			for i := 0; i <= mob.Rarity; i++ {
-				mobsRarity = append(mobsRarity, mob.Name)
-			}
+	}
+
+	for _, mob := range aux {
+		mobsConfig[mob.Name] = mob
+		for i := 0; i <= mob.Rarity; i++ {
+			mobsRarity = append(mobsRarity, mob.Name)
 		}
 	}
+
 	defer file.Close()
 }
-func createMobsConfig() {
-	mob := &MobConfig{
-		Name:          "poring",
-		Speed:         1.3,
-		IdleFrametime: 6,
-		WalkFrametime: 3,
-		Rarity:        1,
-	}
-	mobsConfig[mob.Name] = mob
-	saveMobsConfig()
-}
-func saveMobsConfig() {
+func createMobsConfig(config []*MobConfig) {
 	file, err := os.Create("mobs.json")
 	if err != nil {
 		log.Fatal(err)
@@ -148,7 +148,7 @@ func saveMobsConfig() {
 	defer file.Close()
 
 	encoder := json.NewEncoder(file)
-	err = encoder.Encode(mobsConfig)
+	err = encoder.Encode(config)
 	if err != nil {
 		log.Fatal(err)
 	}
