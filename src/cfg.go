@@ -11,8 +11,8 @@ type Cfg struct {
 	SkipTaskbar           bool `ini:"skip_taskbar" json:"skip_taskbar"`
 	ScreenPaddingBottom   int  `ini:"screen_padding_bottom" json:"screen_padding_bottom"`
 	ScreenMonitors        int  `ini:"screen_monitors" json:"screen_monitors"`
-	MobsCycle             bool `ini:"mobs_cycle" json:"mobs_cycle"`
-	MobsSpawnMax          int  `ini:"mobs_spawn_max" json:"mobs_spawn_max"`
+	MobsSpawnCycle        bool `ini:"mobs_cycle" json:"mobs_cycle"`
+	MobsSpawnTotal        int  `ini:"mobs_spawn_max" json:"mobs_spawn_max"`
 	MobsSpawnSecondsMin   int  `ini:"mobs_spawn_seconds_min" json:"mobs_spawn_seconds_min"`
 	MobsSpawnSecondsMax   int  `ini:"mobs_spawn_seconds_max" json:"mobs_spawn_seconds_max"`
 	MobsDespawnSecondsMin int  `ini:"mobs_despawn_seconds_min" json:"mobs_despawn_seconds_min"`
@@ -39,7 +39,7 @@ func (c *Cfg) Load() {
 	}
 
 	c.ScreenMonitors = c.IntPositive(c.ScreenMonitors, 1)
-	c.MobsSpawnMax = c.IntPositive(c.MobsSpawnMax, 6)
+	c.MobsSpawnTotal = c.IntPositive(c.MobsSpawnTotal, 6)
 	c.MobsSpawnSecondsMin = c.IntPositive(c.MobsSpawnSecondsMin, 5)
 	c.MobsSpawnSecondsMax = c.IntPositive(c.MobsSpawnSecondsMax, 20)
 
@@ -59,12 +59,12 @@ func (c *Cfg) Save() {
 func (c *Cfg) LoadDefaults() {
 	c.ScreenPaddingBottom = 62
 	c.ScreenMonitors = 1
-	c.MobsCycle = true
-	c.MobsSpawnMax = 6
+	c.MobsSpawnCycle = true
+	c.MobsSpawnTotal = 6
 	c.MobsSpawnSecondsMin = 3
 	c.MobsSpawnSecondsMax = 10
-	c.MobsDespawnSecondsMin = 20
-	c.MobsDespawnSecondsMax = 40
+	c.MobsDespawnSecondsMin = 40
+	c.MobsDespawnSecondsMax = 60
 }
 
 func (c *Cfg) IntRange(val, min, max, dfault int) int {

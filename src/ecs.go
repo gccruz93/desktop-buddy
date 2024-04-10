@@ -1,46 +1,47 @@
 package main
 
 import (
+	"desktop-buddy/assets"
+
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type Entity struct {
-	x, y, vx, vy                        float64
-	height, width                       int
-	frameIndex, frameSpeed, frameLength int
-	gifPath                             string
-	alpha                               float32
+	x, y, vx, vy          float64
+	frameIndex, frameTime int
+	gifName               string
+	singleAsset           bool
+	alpha                 float32
+	invert                bool
+	// anchor                string
+	anchorMargin float64
 }
 
-func (e *Entity) Update() {
-	e.y = float64(screenHeight - e.height)
+func (e *Entity) update() {
+	e.y = float64(screenHeight) - assets.LoadedGifs[e.gifName].Height
 	e.y += e.vy
 
-	if frameCount%e.frameSpeed == 0 {
-		e.frameIndex = (e.frameIndex + 1) % e.frameLength
+	if frameCount%e.frameTime == 0 {
+		e.frameIndex = (e.frameIndex + 1) % assets.LoadedGifs[e.gifName].Length
 	}
 
-	if e.alpha != 1 {
+	if e.alpha < 1 {
 		e.alpha += 0.01
-		if e.alpha >= 1 {
-			e.alpha = 1
-		}
 	}
 }
 
-func (e *Entity) Draw(screen *ebiten.Image) {
+func (e *Entity) draw(screen *ebiten.Image) {
 	op := &ebiten.DrawImageOptions{}
 	op.ColorScale.ScaleAlpha(e.alpha)
-	op.GeoM.Translate(e.x, e.y)
-	screen.DrawImage(loadedGifs[e.gifPath][e.frameIndex], op)
+	if e.singleAsset && e.invert {
+		op.GeoM.Scale(-1, 1)
+		op.GeoM.Translate(float64(assets.LoadedGifs[e.gifName].Width), 0)
+	}
+	op.GeoM.Translate(e.x, e.y-e.anchorMargin)
+	screen.DrawImage(assets.LoadedGifs[e.gifName].Frames[e.frameIndex], op)
 }
 
-func (e *Entity) SetGif(path string, speed int) {
-	loadGif(path)
-	e.gifPath = path
-	e.width = loadedGifs[e.gifPath][0].Bounds().Dx()
-	e.height = loadedGifs[e.gifPath][0].Bounds().Dy()
-	e.frameLength = len(loadedGifs[e.gifPath])
-	e.frameSpeed = speed
+func (e *Entity) setGif(name string) {
+	e.gifName = name
 	e.frameIndex = 0
 }

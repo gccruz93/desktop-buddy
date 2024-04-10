@@ -1,6 +1,7 @@
 package main
 
 import (
+	"desktop-buddy/assets"
 	"encoding/json"
 	"log"
 	"os"
@@ -10,84 +11,118 @@ import (
 
 type Mob struct {
 	Entity
+	assetName                               string
 	speed                                   float64
 	moveFuel, idleTime, idleCount, lifeTime int
 
 	idleFrametime int
 	walkFrametime int
-	gifName       string
+
+	status string // "idle", "walk"
 }
 
 var mobs []*Mob
 
 func (m *Mob) Update() {
-	if m.moveFuel > 0 {
-		m.x += m.vx
-		if m.x+float64(m.width) >= float64(screenWidth) {
-			m.SetWalkLeft()
-		} else if m.x <= 1 {
-			m.SetWalkRight()
-		}
-		m.moveFuel--
-	} else {
-		if m.idleCount == 0 {
-			m.SetIdle()
-			m.idleTime = random(200, 400)
-		}
-
-		m.idleCount++
-
-		if m.idleCount >= m.idleTime {
-			m.idleCount = 0
-			m.idleTime = 0
-
-			if random(0, 1) == 0 {
-				m.SetWalkLeft()
-			} else {
-				m.SetWalkRight()
+	if m.speed > 0 {
+		if m.moveFuel > 0 {
+			m.x += m.vx
+			if m.x+float64(assets.LoadedGifs[m.gifName].Width) >= float64(screenWidth) {
+				m.vx = -m.speed
+				m.invert = false
+			} else if m.x <= 1 {
+				m.vx = m.speed
+				m.invert = true
+			}
+			m.moveFuel--
+		} else {
+			if m.idleCount == 0 {
+				m.setIdle()
+				loops := random(8, 12)
+				m.idleTime = m.frameTime * assets.LoadedGifs[m.gifName].Length * loops
 			}
 
-			steps := random(1, 8)
-			m.moveFuel = (m.frameSpeed * m.frameLength * steps) - steps
+			m.idleCount++
+
+			if m.idleCount >= m.idleTime {
+				m.idleCount = 0
+				m.idleTime = 0
+
+				if random(0, 1) == 0 {
+					m.setWalkLeft()
+				} else {
+					m.setWalkRight()
+				}
+
+				steps := random(1, 6)
+				m.moveFuel = m.frameTime*assets.LoadedGifs[m.gifName].Length*steps - m.frameTime
+			}
 		}
 	}
 
-	m.Entity.Update()
+	m.Entity.update()
 }
 func (m *Mob) Draw(screen *ebiten.Image) {
-	m.Entity.Draw(screen)
+	m.Entity.draw(screen)
 }
-func (m *Mob) SetIdle() {
-	if m.vx > 0 {
-		m.SetIdleRight()
+func (m *Mob) setStatus(status string) {
+	m.status = status
+	if m.singleAsset {
+		m.setGif(m.assetName + "_" + m.status)
 	} else {
-		m.SetIdleLeft()
+		posfix := "_left"
+		if m.invert {
+			posfix = "_right"
+		}
+		m.setGif(m.assetName + "_" + m.status + posfix)
 	}
 }
-func (m *Mob) SetIdleLeft() {
-	m.SetGif(m.gifName+"_idle_left", m.idleFrametime)
+func (m *Mob) setIdle() {
+	m.frameTime = m.idleFrametime
 	m.vx = 0
+	m.setStatus("idle")
 }
-func (m *Mob) SetIdleRight() {
-	m.SetGif(m.gifName+"_idle_right", m.idleFrametime)
-	m.vx = 0
+func (m *Mob) setWalk() {
+	m.frameTime = m.walkFrametime
+	m.setStatus("walk")
 }
-func (m *Mob) SetWalkLeft() {
-	m.SetGif(m.gifName+"_walk_left", m.walkFrametime)
+func (m *Mob) setWalkLeft() {
 	m.vx = -m.speed
+	m.invert = false
+	m.setWalk()
 }
-func (m *Mob) SetWalkRight() {
-	m.SetGif(m.gifName+"_walk_right", m.walkFrametime)
+func (m *Mob) setWalkRight() {
 	m.vx = m.speed
+	m.invert = true
+	m.setWalk()
 }
-func (m *Mob) SetSpawn() {
-	m.x = float64(random(0, cfg.ScreenMonitors*screenWidth-2*m.width))
+func (m *Mob) setSpawn() {
+	m.x = float64(random(0, cfg.ScreenMonitors*screenWidth-2*int(assets.LoadedGifs[m.gifName].Width)))
+	m.lifeTime = random(cfg.MobsDespawnSecondsMin, cfg.MobsDespawnSecondsMin) * ebiten.TPS()
+	m.setIdle()
+	if random(0, 1) == 0 {
+		m.invert = false
+	} else {
+		m.invert = true
+	}
 }
-func (m *Mob) SetIdleFrametime(frametime int) {
-	m.idleFrametime = frametime
+func (m *Mob) loadGif(status string) {
+	a := assets.LoadGif(m.assetName + "_" + status)
+	if a {
+		m.singleAsset = true
+	} else {
+		assets.LoadGif(m.assetName + "_" + status + "_left")
+		assets.LoadGif(m.assetName + "_" + status + "_right")
+	}
 }
-func (m *Mob) SetWalkFrametime(frametime int) {
-	m.walkFrametime = frametime
+
+func (m *Mob) setupIdle(frameTime int) {
+	m.loadGif("idle")
+	m.idleFrametime = frameTime
+}
+func (m *Mob) setupWalk(frameTime int) {
+	m.loadGif("walk")
+	m.walkFrametime = frameTime
 }
 
 type MobConfig struct {
@@ -96,15 +131,17 @@ type MobConfig struct {
 	IdleFrametime int     `json:"idle_frametime"`
 	WalkFrametime int     `json:"walk_frametime"`
 	Rarity        int     `json:"rarity"`
+	// Anchor        string  `json:"anchor"`
+	AnchorMargin float64 `json:"anchor_margin"`
 }
 
-var mobsConfig map[string]*MobConfig
+var mobsLoaded map[string]*MobConfig
 var mobsRarity []string
 
 func loadMobsConfig() {
 	mobs = nil
-	mobsConfig = nil
-	mobsConfig = make(map[string]*MobConfig)
+	mobsLoaded = nil
+	mobsLoaded = make(map[string]*MobConfig)
 
 	var aux []*MobConfig
 
@@ -117,6 +154,8 @@ func loadMobsConfig() {
 				IdleFrametime: 6,
 				WalkFrametime: 3,
 				Rarity:        1,
+				// Anchor:        "bottom",
+				AnchorMargin: 1,
 			}
 			aux = append(aux, mob)
 			createMobsConfig(aux)
@@ -132,7 +171,7 @@ func loadMobsConfig() {
 	}
 
 	for _, mob := range aux {
-		mobsConfig[mob.Name] = mob
+		mobsLoaded[mob.Name] = mob
 		for i := 0; i <= mob.Rarity; i++ {
 			mobsRarity = append(mobsRarity, mob.Name)
 		}
@@ -155,22 +194,31 @@ func createMobsConfig(config []*MobConfig) {
 }
 
 func SpawnRandom(n int) {
-	if len(mobsConfig) == 0 {
+	if len(mobsLoaded) == 0 {
 		return
 	}
 
 	nextSpawn = random(cfg.MobsSpawnSecondsMin, cfg.MobsSpawnSecondsMax)
 
 	for n > 0 {
-		loadedMob := mobsConfig[mobsRarity[random(0, len(mobsRarity)-1)]]
+		loadedMob := mobsLoaded[mobsRarity[random(0, len(mobsRarity)-1)]]
 		newMob := &Mob{
-			speed:         loadedMob.Speed,
-			gifName:       loadedMob.Name,
-			idleFrametime: loadedMob.IdleFrametime,
-			walkFrametime: loadedMob.WalkFrametime,
+			speed: loadedMob.Speed,
 		}
-		newMob.SetSpawn()
-		newMob.lifeTime = random(cfg.MobsDespawnSecondsMin, cfg.MobsDespawnSecondsMin) * ebiten.TPS()
+		newMob.assetName = loadedMob.Name
+		// newMob.anchor = loadedMob.Anchor
+		// if loadedMob.Anchor == "bottom" {
+		// 	newMob.anchorMargin = -loadedMob.AnchorMargin
+		// } else {
+		// }
+		newMob.anchorMargin = loadedMob.AnchorMargin
+
+		newMob.setupIdle(loadedMob.IdleFrametime)
+		newMob.setupWalk(loadedMob.WalkFrametime)
+
+		newMob.setStatus("idle")
+		newMob.setSpawn()
+
 		mobs = append(mobs, newMob)
 		n--
 	}

@@ -2,13 +2,13 @@
     "FixedFileInfo": {
         "FileVersion": {
             "Major": 0,
-            "Minor": 1,
+            "Minor": 2,
             "Patch": 0,
             "Build": 1
         },
         "ProductVersion": {
             "Major": 0,
-            "Minor": 1,
+            "Minor": 2,
             "Patch": 0,
             "Build": 1
         },
@@ -22,14 +22,14 @@
         "Comments": "@gccruz",
         "CompanyName": "twpax",
         "FileDescription": "Desktop Buddy",
-        "FileVersion": "0.1.0",
+        "FileVersion": "0.2.0",
         "InternalName": "",
         "LegalCopyright": "",
         "LegalTrademarks": "",
         "OriginalFilename": "",
         "PrivateBuild": "",
         "ProductName": "Desktop Buddy",
-        "ProductVersion": "0.1.0",
+        "ProductVersion": "0.2.0",
         "SpecialBuild": ""
     },
     "VarFileInfo": {
@@ -38,6 +38,6 @@
             "CharsetID": "04B0"
         }
     },
-    "IconPath": "icontray.ico",
+    "IconPath": "../assets/ui/icontray.ico",
     "ManifestPath": ""
 }

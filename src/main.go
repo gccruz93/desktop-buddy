@@ -6,6 +6,7 @@ package main
 
 import (
 	"bytes"
+	"desktop-buddy/assets"
 	_ "embed"
 	"image"
 	_ "image/png"
@@ -21,16 +22,12 @@ var (
 	title        = "Desktop Buddy"
 	frameCount   = 0
 	nextSpawn    = 1
-	//go:embed icon.png
-	icon []byte
-	//go:embed icontray.ico
-	icontray []byte
 )
 
 func init() {
 	cfg.Load()
 	loadMobsConfig()
-	loadedGifs = make(map[string][]*ebiten.Image)
+	assets.LoadedGifs = make(map[string]*assets.CustomGif)
 }
 
 type Game struct{}
@@ -42,14 +39,14 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 func (g *Game) Update() error {
 	frameCount++
 
-	if frameCount%(nextSpawn*ebiten.TPS()) == 0 && len(mobs) < cfg.MobsSpawnMax {
+	if frameCount%(nextSpawn*ebiten.TPS()) == 0 && len(mobs) < cfg.MobsSpawnTotal {
 		SpawnRandom(1)
 	}
 
 	mobsAlive := mobs[:0]
 	for _, e := range mobs {
 		e.Update()
-		if cfg.MobsCycle {
+		if cfg.MobsSpawnCycle {
 			e.lifeTime--
 		}
 
@@ -82,7 +79,7 @@ func main() {
 	ebiten.SetWindowMousePassthrough(true)
 	setScreenArea()
 
-	img, _, err := image.Decode(bytes.NewReader(icon))
+	img, _, err := image.Decode(bytes.NewReader(assets.Icon))
 	if err != nil {
 		log.Fatal(err)
 	}

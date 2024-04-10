@@ -1,19 +1,28 @@
 package main
 
 import (
+	"desktop-buddy/assets"
 	"fmt"
 
 	"github.com/energye/systray"
-	"github.com/hajimehoshi/ebiten/v2"
 )
 
 func onReady() {
-	systray.SetIcon(icontray)
+	systray.SetIcon(assets.Icontray)
 	systray.SetTitle(title)
 	systray.SetTooltip(title)
 	systray.SetOnRClick(func(menu systray.IMenu) {
 		menu.ShowMenu()
 	})
+
+	systray.AddMenuItem("v0.2.0", "v0.2.0").Disable()
+
+	systray.AddMenuItem("Close", "Close").Click(func() {
+		cfg.Save()
+		systray.Quit()
+	})
+
+	systray.AddSeparator()
 
 	mTaskbar := systray.AddMenuItem("Hide from taskbar", "Hide from taskbar")
 	mTaskbar.Click(func() {
@@ -29,63 +38,50 @@ func onReady() {
 		mTaskbar.Check()
 	}
 
+	systray.AddMenuItem("Reload", "Reload").Click(func() {
+		cfg.Load()
+		loadMobsConfig()
+		assets.ClearGifs()
+		nextSpawn = 1
+	})
+
+	systray.AddSeparator()
+
 	/**
 	* ========== MOBS ==========
 	 */
 	mMobs := systray.AddMenuItem("Mobs", "Mobs")
-	mMobsMaximo := mMobs.AddSubMenuItem(fmt.Sprintf("Total: %d", cfg.MobsSpawnMax), "")
-	mMobsMaximo.Disable()
+	mMobsSpawnTotal := mMobs.AddSubMenuItem(fmt.Sprintf("Total: %d", cfg.MobsSpawnTotal), "")
+	mMobsSpawnTotal.Disable()
 
 	mMobs.AddSubMenuItem("Total++", "").Click(func() {
-		cfg.MobsSpawnMax++
-		mMobsMaximo.SetTitle(fmt.Sprintf("Total: %d", cfg.MobsSpawnMax))
+		cfg.MobsSpawnTotal++
+		mMobsSpawnTotal.SetTitle(fmt.Sprintf("Total: %d", cfg.MobsSpawnTotal))
 		cfg.Save()
 	})
 
 	mMobs.AddSubMenuItem("Total--", "").Click(func() {
-		cfg.MobsSpawnMax--
-		mMobsMaximo.SetTitle(fmt.Sprintf("Total: %d", cfg.MobsSpawnMax))
+		cfg.MobsSpawnTotal--
+		mMobsSpawnTotal.SetTitle(fmt.Sprintf("Total: %d", cfg.MobsSpawnTotal))
 		cfg.Save()
 	})
 
-	mMobs.AddSubMenuItem("Spawn", "Spawn").Click(func() {
-		SpawnRandom(1)
-	})
-
-	mMobsCycle := mMobs.AddSubMenuItem("Enable cycle", "Enable cycle")
-	mMobsCycle.Click(func() {
-		cfg.MobsCycle = !cfg.MobsCycle
-		if cfg.MobsCycle {
-			mMobsCycle.Check()
+	mMobsSpawnCycle := mMobs.AddSubMenuItem("Enable cycle", "Enable cycle")
+	mMobsSpawnCycle.Click(func() {
+		cfg.MobsSpawnCycle = !cfg.MobsSpawnCycle
+		if cfg.MobsSpawnCycle {
+			mMobsSpawnCycle.Check()
 		} else {
-			mMobsCycle.Uncheck()
+			mMobsSpawnCycle.Uncheck()
 		}
 		cfg.Save()
 	})
-	if cfg.MobsCycle {
-		mMobsCycle.Check()
+	if cfg.MobsSpawnCycle {
+		mMobsSpawnCycle.Check()
 	}
 
-	systray.AddSeparator()
-
-	systray.AddMenuItem("Reload", "Reload").Click(func() {
-		cfg.Load()
-		// was stopping the program
-		// setScreenArea()
-		loadMobsConfig()
-		loadedGifs = nil
-		loadedGifs = make(map[string][]*ebiten.Image)
-		nextSpawn = 1
-	})
-
-	/**
-	* ========== END ==========
-	 */
-	systray.AddSeparator()
-
-	systray.AddMenuItem("Close", "Close").Click(func() {
-		cfg.Save()
-		systray.Quit()
+	systray.AddMenuItem("Spawn", "Spawn").Click(func() {
+		SpawnRandom(1)
 	})
 }
 
