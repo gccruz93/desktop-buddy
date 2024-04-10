@@ -15,7 +15,7 @@ func onReady() {
 		menu.ShowMenu()
 	})
 
-	systray.AddMenuItem("v0.2.0", "v0.2.0").Disable()
+	systray.AddMenuItem("v0.2.0 - @twpax", "v0.2.0 - @twpax").Disable()
 
 	systray.AddMenuItem("Close", "Close").Click(func() {
 		cfg.Save()

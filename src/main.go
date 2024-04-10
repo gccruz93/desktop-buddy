@@ -1,5 +1,5 @@
 /*
-Copyright © 2024 <https://github.com/gccruz93>
+Copyright © 2024 <https://github.com/gccruz93> twpax
 */
 //go:generate goversioninfo
 package main
