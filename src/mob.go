@@ -1,7 +1,7 @@
 package main
 
 import (
-	"desktop-buddy/assets"
+	"desktop-buddy/src/assets"
 	"encoding/json"
 	"log"
 	"os"

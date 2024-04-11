@@ -1,7 +1,7 @@
 package main
 
 import (
-	"desktop-buddy/assets"
+	"desktop-buddy/src/assets"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"desktop-buddy/assets"
+	"desktop-buddy/src/assets"
 	"fmt"
 
 	"github.com/energye/systray"

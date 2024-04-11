@@ -6,7 +6,7 @@ package main
 
 import (
 	"bytes"
-	"desktop-buddy/assets"
+	"desktop-buddy/src/assets"
 	_ "embed"
 	"image"
 	_ "image/png"
