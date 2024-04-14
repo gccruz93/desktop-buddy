@@ -1,1 +1,0 @@
-https://ezgif.com/effects

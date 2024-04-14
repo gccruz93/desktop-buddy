@@ -7,5 +7,8 @@
 4. Configure the mobs.json and assets folder to customize your pets.
 5. Enjoy your new pets!
 
+#### Tools
+https://ezgif.com/effects
+
 #### Preview
 <p align="center"><img alt="" src=".readme/preview.png"></p>

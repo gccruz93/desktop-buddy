@@ -9,9 +9,9 @@
       "type": "go",
       "request": "launch",
       "mode": "auto",
-      "program": "${workspaceFolder}/src",
-      "output": "${workspaceFolder}/debug/debug.exe",
-      "cwd": "${workspaceFolder}/debug"
+      "program": "${workspaceFolder}/cmd/desktop-buddy",
+      "output": "${workspaceFolder}/temp/debug/debug.exe",
+      "cwd": "${workspaceFolder}/temp/debug"
     }
   ]
 }

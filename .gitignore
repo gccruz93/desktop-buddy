@@ -1,6 +1,2 @@
-bin
-debug
+temp/*/*
 resource.syso
-*.ini
-*.exe
-mobs.json

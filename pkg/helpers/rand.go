@@ -1,10 +1,10 @@
-package main
+package helpers
 
 import (
 	"math/rand"
 )
 
-func random(min, max int) int {
+func Random(min, max int) int {
 	if min == max {
 		return min
 	}

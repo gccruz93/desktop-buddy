@@ -1,7 +1,9 @@
 package main
 
 import (
-	"desktop-buddy/src/assets"
+	"desktop-buddy/assets"
+	"desktop-buddy/internal/core"
+	"desktop-buddy/internal/mobs"
 	"fmt"
 
 	"github.com/energye/systray"
@@ -9,8 +11,8 @@ import (
 
 func onReady() {
 	systray.SetIcon(assets.Icontray)
-	systray.SetTitle(title)
-	systray.SetTooltip(title)
+	systray.SetTitle(core.Title)
+	systray.SetTooltip(core.Title)
 	systray.SetOnRClick(func(menu systray.IMenu) {
 		menu.ShowMenu()
 	})
@@ -18,7 +20,7 @@ func onReady() {
 	systray.AddMenuItem("v0.2.0 - @twpax", "v0.2.0 - @twpax").Disable()
 
 	systray.AddMenuItem("Close", "Close").Click(func() {
-		cfg.Save()
+		core.Cfg.Save()
 		systray.Quit()
 	})
 
@@ -26,23 +28,22 @@ func onReady() {
 
 	mTaskbar := systray.AddMenuItem("Hide from taskbar", "Hide from taskbar")
 	mTaskbar.Click(func() {
-		cfg.SkipTaskbar = !cfg.SkipTaskbar
-		if cfg.SkipTaskbar {
+		core.Cfg.SkipTaskbar = !core.Cfg.SkipTaskbar
+		if core.Cfg.SkipTaskbar {
 			mTaskbar.Check()
 		} else {
 			mTaskbar.Uncheck()
 		}
-		cfg.Save()
+		core.Cfg.Save()
 	})
-	if cfg.SkipTaskbar {
+	if core.Cfg.SkipTaskbar {
 		mTaskbar.Check()
 	}
 
 	systray.AddMenuItem("Reload", "Reload").Click(func() {
-		cfg.Load()
-		loadMobsConfig()
-		assets.ClearGifs()
-		nextSpawn = 1
+		core.Cfg.Load()
+		mobs.LoadMobsConfig()
+		core.NextSpawnTick = 1
 	})
 
 	systray.AddSeparator()
@@ -51,37 +52,37 @@ func onReady() {
 	* ========== MOBS ==========
 	 */
 	mMobs := systray.AddMenuItem("Mobs", "Mobs")
-	mMobsSpawnTotal := mMobs.AddSubMenuItem(fmt.Sprintf("Total: %d", cfg.MobsSpawnTotal), "")
+	mMobsSpawnTotal := mMobs.AddSubMenuItem(fmt.Sprintf("Total: %d", core.Cfg.MobsSpawnTotal), "")
 	mMobsSpawnTotal.Disable()
 
 	mMobs.AddSubMenuItem("Total++", "").Click(func() {
-		cfg.MobsSpawnTotal++
-		mMobsSpawnTotal.SetTitle(fmt.Sprintf("Total: %d", cfg.MobsSpawnTotal))
-		cfg.Save()
+		core.Cfg.MobsSpawnTotal++
+		mMobsSpawnTotal.SetTitle(fmt.Sprintf("Total: %d", core.Cfg.MobsSpawnTotal))
+		core.Cfg.Save()
 	})
 
 	mMobs.AddSubMenuItem("Total--", "").Click(func() {
-		cfg.MobsSpawnTotal--
-		mMobsSpawnTotal.SetTitle(fmt.Sprintf("Total: %d", cfg.MobsSpawnTotal))
-		cfg.Save()
+		core.Cfg.MobsSpawnTotal--
+		mMobsSpawnTotal.SetTitle(fmt.Sprintf("Total: %d", core.Cfg.MobsSpawnTotal))
+		core.Cfg.Save()
 	})
 
 	mMobsSpawnCycle := mMobs.AddSubMenuItem("Enable cycle", "Enable cycle")
 	mMobsSpawnCycle.Click(func() {
-		cfg.MobsSpawnCycle = !cfg.MobsSpawnCycle
-		if cfg.MobsSpawnCycle {
+		core.Cfg.MobsSpawnCycle = !core.Cfg.MobsSpawnCycle
+		if core.Cfg.MobsSpawnCycle {
 			mMobsSpawnCycle.Check()
 		} else {
 			mMobsSpawnCycle.Uncheck()
 		}
-		cfg.Save()
+		core.Cfg.Save()
 	})
-	if cfg.MobsSpawnCycle {
+	if core.Cfg.MobsSpawnCycle {
 		mMobsSpawnCycle.Check()
 	}
 
 	systray.AddMenuItem("Spawn", "Spawn").Click(func() {
-		SpawnRandom(1)
+		mobs.SpawnRandom(1)
 	})
 }
 

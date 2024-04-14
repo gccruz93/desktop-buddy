@@ -6,7 +6,9 @@ package main
 
 import (
 	"bytes"
-	"desktop-buddy/src/assets"
+	"desktop-buddy/assets"
+	"desktop-buddy/internal/core"
+	"desktop-buddy/internal/mobs"
 	_ "embed"
 	"image"
 	_ "image/png"
@@ -16,18 +18,9 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-var (
-	screenHeight = 0
-	screenWidth  = 0
-	title        = "Desktop Buddy"
-	frameCount   = 0
-	nextSpawn    = 1
-)
-
 func init() {
-	cfg.Load()
-	loadMobsConfig()
-	assets.LoadedGifs = make(map[string]*assets.CustomGif)
+	core.Cfg.Load()
+	mobs.LoadMobsConfig()
 }
 
 type Game struct{}
@@ -37,43 +30,45 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 func (g *Game) Update() error {
-	frameCount++
+	core.FrameTick++
 
-	if frameCount%(nextSpawn*ebiten.TPS()) == 0 && len(mobs) < cfg.MobsSpawnTotal {
-		SpawnRandom(1)
+	if core.FrameTick%(core.NextSpawnTick*ebiten.TPS()) == 0 && len(mobs.MobsAlive) < core.Cfg.MobsSpawnTotal {
+		mobs.SpawnRandom(1)
 	}
 
-	mobsAlive := mobs[:0]
-	for _, e := range mobs {
+	mobsAlive := mobs.MobsAlive[:0]
+	for _, e := range mobs.MobsAlive {
 		e.Update()
-		if cfg.MobsSpawnCycle {
-			e.lifeTime--
+		if core.Cfg.MobsSpawnCycle && !e.Immortal {
+			e.LifeTime--
 		}
 
-		if e.lifeTime > 0 {
+		if e.LifeTime > 0 {
 			mobsAlive = append(mobsAlive, e)
 		}
 	}
-	mobs = mobsAlive
+	mobs.MobsAlive = mobsAlive
 
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	for _, e := range mobs {
+	for _, e := range mobs.MobsAlive {
 		e.Draw(screen)
 	}
 }
 
 func setScreenArea() {
 	sw, sh := ebiten.ScreenSizeInFullscreen()
-	screenHeight = sh - cfg.ScreenPaddingBottom
-	screenWidth = sw * cfg.ScreenMonitors
+	screenHeight := sh - core.Cfg.ScreenPaddingBottom
+	screenWidth := sw * core.Cfg.ScreenMonitors
 	ebiten.SetWindowSize(screenWidth, screenHeight)
+	core.ScreenHeight = float64(screenHeight)
+	core.ScreenWidth = float64(screenWidth)
 }
 
 func main() {
-	ebiten.SetWindowTitle(title)
+	ebiten.SetWindowTitle(core.Title)
 	ebiten.SetWindowDecorated(false)
 	ebiten.SetWindowFloating(true)
 	ebiten.SetWindowMousePassthrough(true)
@@ -88,7 +83,7 @@ func main() {
 
 	op := &ebiten.RunGameOptions{}
 	op.ScreenTransparent = true
-	op.SkipTaskbar = cfg.SkipTaskbar
+	op.SkipTaskbar = core.Cfg.SkipTaskbar
 
 	trayStart, trayEnd := systray.RunWithExternalLoop(onReady, onExit)
 	trayStart()

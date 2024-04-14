@@ -1,2 +1,2 @@
 build:
-	go build -ldflags "-s -w" -o "./bin/Desktop Buddy.exe" desktop-buddy/src
+	go build -ldflags "-s -w" -o "./temp/bin/Desktop Buddy.exe" desktop-buddy/cmd/desktop-buddy
