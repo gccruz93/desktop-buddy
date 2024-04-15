@@ -17,6 +17,8 @@ type Config struct {
 	MobsSpawnSecondsMax   int  `ini:"mobs_spawn_seconds_max" json:"mobs_spawn_seconds_max"`
 	MobsDespawnSecondsMin int  `ini:"mobs_despawn_seconds_min" json:"mobs_despawn_seconds_min"`
 	MobsDespawnSecondsMax int  `ini:"mobs_despawn_seconds_max" json:"mobs_despawn_seconds_max"`
+	EmoteSpawnSecondsMin  int  `ini:"emote_spawn_seconds_min" json:"emote_spawn_seconds_min"`
+	EmoteSpawnSecondsMax  int  `ini:"emote_spawn_seconds_max" json:"emote_spawn_seconds_max"`
 }
 
 func (c *Config) Load() {
@@ -38,8 +40,6 @@ func (c *Config) Load() {
 
 	c.ScreenMonitors = c.IntPositive(c.ScreenMonitors, 1)
 	c.MobsSpawnTotal = c.IntPositive(c.MobsSpawnTotal, 6)
-	c.MobsSpawnSecondsMin = c.IntPositive(c.MobsSpawnSecondsMin, 5)
-	c.MobsSpawnSecondsMax = c.IntPositive(c.MobsSpawnSecondsMax, 20)
 
 	c.Save()
 }
@@ -62,7 +62,9 @@ func (c *Config) LoadDefaults() {
 	c.MobsSpawnSecondsMin = 3
 	c.MobsSpawnSecondsMax = 10
 	c.MobsDespawnSecondsMin = 40
-	c.MobsDespawnSecondsMax = 60
+	c.MobsDespawnSecondsMax = 90
+	c.EmoteSpawnSecondsMin = 30
+	c.EmoteSpawnSecondsMax = 90
 }
 
 func (c *Config) IntRange(val, min, max, dfault int) int {

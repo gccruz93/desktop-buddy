@@ -5,11 +5,10 @@ import (
 )
 
 var (
-	Title         = "Desktop Buddy"
-	ScreenHeight  = 0.0
-	ScreenWidth   = 0.0
-	FrameTick     = 0
-	NextSpawnTick = 1
+	Title        = "Desktop Buddy"
+	ScreenHeight = 0.0
+	ScreenWidth  = 0.0
+	FrameTick    = 0
 )
 
 var (

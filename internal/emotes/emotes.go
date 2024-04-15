@@ -1,37 +1,52 @@
 package emotes
 
 import (
-	"bytes"
+	"desktop-buddy/internal/core"
 	"desktop-buddy/pkg/helpers"
-	"image/gif"
-	"os"
+
+	"github.com/hajimehoshi/ebiten/v2"
 )
 
+var (
+	EmoteActive *Emote
+	rarityList  []int
+)
+
+var (
+	cachedConfig []*EmoteConfig
+)
+
+var NextSpawnTick = 1
+
 type Emote struct {
-	name      string
-	frametime int
-	gif       *helpers.CustomGif
+	alpha                 float32
+	anchorMargin          float64
+	frameIndex, frameTime int
+	gif                   *helpers.CustomGif
+	X, Y                  float64
+	loops, loopsCount     int
+	ended                 bool
 }
 
-var emotesList map[string]*Emote
+func (e *Emote) Update() {
+	if core.FrameTick%e.frameTime == 0 {
+		if !e.ended || e.ended && e.loops == 0 {
+			e.frameIndex = (e.frameIndex + 1) % e.gif.Length
+			if e.frameIndex == 0 {
+				e.loopsCount++
+				e.ended = e.loopsCount >= e.loops
+			}
+		}
+	}
 
-func loadEmote(name string, frametime int) bool {
-	if _, ok := emotesList[name]; ok {
-		return true
+	if !e.ended && e.alpha < 1 {
+		e.alpha += 0.04
 	}
-	file, err := os.ReadFile("./assets/emotes/" + name + ".gif")
-	if err != nil {
-		return false
-	}
-	g, _ := gif.DecodeAll(bytes.NewReader(file))
-	emotesList[name] = &Emote{
-		name:      name,
-		frametime: frametime,
-		gif:       helpers.SplitAnimatedGIF(g),
-	}
-	return true
 }
 
-func loadEmotesConfig() {
-
+func (e *Emote) Draw(screen *ebiten.Image) {
+	op := &ebiten.DrawImageOptions{}
+	op.ColorScale.ScaleAlpha(e.alpha)
+	op.GeoM.Translate(e.X, e.Y-e.gif.Height-e.anchorMargin)
+	screen.DrawImage(e.gif.Frames[e.frameIndex], op)
 }

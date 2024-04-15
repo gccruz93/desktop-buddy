@@ -3,6 +3,7 @@ package main
 import (
 	"desktop-buddy/assets"
 	"desktop-buddy/internal/core"
+	"desktop-buddy/internal/emotes"
 	"desktop-buddy/internal/mobs"
 	"fmt"
 
@@ -42,8 +43,8 @@ func onReady() {
 
 	systray.AddMenuItem("Reload", "Reload").Click(func() {
 		core.Cfg.Load()
-		mobs.LoadMobsConfig()
-		core.NextSpawnTick = 1
+		mobs.LoadConfig()
+		emotes.LoadConfig()
 	})
 
 	systray.AddSeparator()

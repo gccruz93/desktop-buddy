@@ -2,32 +2,42 @@ package mobs
 
 import (
 	"desktop-buddy/internal/core"
-	"desktop-buddy/internal/ecs"
+	"desktop-buddy/internal/emotes"
 	"desktop-buddy/pkg/helpers"
 
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 var (
-	MobsAlive  []*Mob
-	MobsRarity []int
+	List       []*Mob
+	rarityList []int
 )
 
 var (
-	CachedMobs     []*MobsConfig
-	CachedMobsGifs map[string]*helpers.CustomGif
+	cachedConfig []*MobConfig
+	cachedGifs   map[string]*helpers.CustomGif
 )
 
+var nextSpawnTick = 1
+
 type Mob struct {
-	ecs.Entity
+	Emote                         *emotes.Emote
 	assetName                     string
 	speed                         float64
 	moveFuel, idleTime, idleCount int
 	idleFrametime, walkFrametime  int
 	status                        string // "idle", "walk"
+	Immortal                      bool
+	LifeTime                      int
 
-	Immortal bool
-	LifeTime int
+	alpha                       float32
+	frameIndex                  int
+	FrameLength, FrameTime      int
+	Height, Width, X, Y, Vx, Vy float64
+	GifName                     string
+	SingleAsset                 bool
+	Invert                      bool
+	AnchorMargin                float64
 }
 
 func (m *Mob) Update() {
@@ -67,8 +77,93 @@ func (m *Mob) Update() {
 		}
 	}
 
-	m.Entity.Update()
+	m.Y = float64(core.ScreenHeight) - m.Height
+	m.Y += m.Vy
+
+	if core.FrameTick%m.FrameTime == 0 {
+		m.frameIndex = (m.frameIndex + 1) % m.FrameLength
+	}
+
+	if m.alpha < 1 {
+		m.alpha += 0.01
+	}
 }
 func (m *Mob) Draw(screen *ebiten.Image) {
-	m.Entity.Draw(screen, CachedMobsGifs[m.GifName])
+	op := &ebiten.DrawImageOptions{}
+	op.ColorScale.ScaleAlpha(m.alpha)
+	if m.SingleAsset && m.Invert {
+		op.GeoM.Scale(-1, 1)
+		op.GeoM.Translate(float64(m.Width), 0)
+	}
+	op.GeoM.Translate(m.X, m.Y-m.AnchorMargin)
+	screen.DrawImage(cachedGifs[m.GifName].Frames[m.frameIndex], op)
+}
+
+func (m *Mob) setStatus(status string) {
+	m.status = status
+	if m.SingleAsset {
+		gifName := m.assetName + "_" + m.status
+		m.setGif(gifName)
+	} else {
+		posfix := "_left"
+		if m.Invert {
+			posfix = "_right"
+		}
+		gifName := m.assetName + "_" + m.status + posfix
+		m.setGif(gifName)
+	}
+}
+func (m *Mob) setIdle() {
+	m.FrameTime = m.idleFrametime
+	m.Vx = 0
+	m.setStatus("idle")
+}
+func (m *Mob) setWalk() {
+	m.FrameTime = m.walkFrametime
+	m.setStatus("walk")
+}
+func (m *Mob) setWalkLeft() {
+	m.Vx = -m.speed
+	m.Invert = false
+	m.setWalk()
+}
+func (m *Mob) setWalkRight() {
+	m.Vx = m.speed
+	m.Invert = true
+	m.setWalk()
+}
+func (m *Mob) setSpawn() {
+	m.X = float64(helpers.Random(0, int(float64(core.Cfg.ScreenMonitors)*core.ScreenWidth-2*m.Width)))
+	m.LifeTime = helpers.Random(core.Cfg.MobsDespawnSecondsMin, core.Cfg.MobsDespawnSecondsMin) * ebiten.TPS()
+	m.setIdle()
+	if helpers.Random(0, 1) == 0 {
+		m.Invert = false
+	} else {
+		m.Invert = true
+	}
+}
+func (m *Mob) setGif(name string) {
+	m.GifName = name
+	m.frameIndex = 0
+	m.Height = cachedGifs[name].Height
+	m.Width = cachedGifs[name].Width
+	m.FrameLength = cachedGifs[name].Length
+}
+func (m *Mob) loadGif(status string) {
+	a := loadAsset(m.assetName + "_" + status)
+	if a {
+		m.SingleAsset = true
+	} else {
+		loadAsset(m.assetName + "_" + status + "_left")
+		loadAsset(m.assetName + "_" + status + "_right")
+	}
+}
+
+func (m *Mob) setupIdle(frameTime int) {
+	m.loadGif("idle")
+	m.idleFrametime = frameTime
+}
+func (m *Mob) setupWalk(frameTime int) {
+	m.loadGif("walk")
+	m.walkFrametime = frameTime
 }

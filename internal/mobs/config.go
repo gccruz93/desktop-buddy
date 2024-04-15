@@ -1,15 +1,13 @@
 package mobs
 
 import (
-	"bytes"
 	"desktop-buddy/pkg/helpers"
 	"encoding/json"
-	"image/gif"
 	"log"
 	"os"
 )
 
-type MobsConfig struct {
+type MobConfig struct {
 	Name          string  `json:"name"`
 	Speed         float64 `json:"speed"`
 	IdleFrametime int     `json:"idle_frametime"`
@@ -19,32 +17,20 @@ type MobsConfig struct {
 	Immortal      bool    `json:"immortal"`
 }
 
-func loadMob(name string) bool {
-	if _, ok := CachedMobsGifs[name]; ok {
-		return true
-	}
-	file, err := os.ReadFile("./assets/mobs/" + name + ".gif")
-	if err != nil {
-		return false
-	}
-	loadedGif, _ := gif.DecodeAll(bytes.NewReader(file))
-	CachedMobsGifs[name] = helpers.SplitAnimatedGIF(loadedGif)
-	return true
-}
+func LoadConfig() {
+	List = nil
+	rarityList = nil
+	cachedConfig = nil
+	cachedGifs = nil
+	cachedGifs = make(map[string]*helpers.CustomGif)
+	nextSpawnTick = 1
 
-func LoadMobsConfig() {
-	MobsAlive = nil
-	MobsRarity = nil
-	CachedMobs = nil
-	CachedMobsGifs = nil
-	CachedMobsGifs = make(map[string]*helpers.CustomGif)
-
-	var mobs []*MobsConfig
+	var mobs []*MobConfig
 
 	file, err := os.Open("mobs.json")
 	if err != nil {
 		if os.IsNotExist(err) {
-			mob := &MobsConfig{
+			mob := &MobConfig{
 				Name:          "poring",
 				Speed:         1.3,
 				IdleFrametime: 6,
@@ -54,7 +40,7 @@ func LoadMobsConfig() {
 				Immortal:      false,
 			}
 			mobs = append(mobs, mob)
-			createMobsConfig(mobs)
+			createConfig(mobs)
 		} else {
 			panic(err)
 		}
@@ -67,15 +53,16 @@ func LoadMobsConfig() {
 	}
 
 	for i, mob := range mobs {
-		CachedMobs = append(CachedMobs, mob)
+		cachedConfig = append(cachedConfig, mob)
 		for j := 0; j <= mob.Rarity; j++ {
-			MobsRarity = append(MobsRarity, i)
+			rarityList = append(rarityList, i)
 		}
 	}
 
 	defer file.Close()
 }
-func createMobsConfig(mobs []*MobsConfig) {
+
+func createConfig(data []*MobConfig) {
 	file, err := os.Create("mobs.json")
 	if err != nil {
 		log.Fatal(err)
@@ -83,7 +70,8 @@ func createMobsConfig(mobs []*MobsConfig) {
 	defer file.Close()
 
 	encoder := json.NewEncoder(file)
-	err = encoder.Encode(mobs)
+	encoder.SetIndent("", "  ")
+	err = encoder.Encode(data)
 	if err != nil {
 		log.Fatal(err)
 	}

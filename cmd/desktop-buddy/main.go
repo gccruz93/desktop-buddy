@@ -8,7 +8,9 @@ import (
 	"bytes"
 	"desktop-buddy/assets"
 	"desktop-buddy/internal/core"
+	"desktop-buddy/internal/emotes"
 	"desktop-buddy/internal/mobs"
+	"desktop-buddy/pkg/helpers"
 	_ "embed"
 	"image"
 	_ "image/png"
@@ -20,7 +22,8 @@ import (
 
 func init() {
 	core.Cfg.Load()
-	mobs.LoadMobsConfig()
+	mobs.LoadConfig()
+	emotes.LoadConfig()
 }
 
 type Game struct{}
@@ -32,30 +35,20 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 func (g *Game) Update() error {
 	core.FrameTick++
 
-	if core.FrameTick%(core.NextSpawnTick*ebiten.TPS()) == 0 && len(mobs.MobsAlive) < core.Cfg.MobsSpawnTotal {
-		mobs.SpawnRandom(1)
-	}
+	mobs.Update()
+	emotes.Update()
 
-	mobsAlive := mobs.MobsAlive[:0]
-	for _, e := range mobs.MobsAlive {
-		e.Update()
-		if core.Cfg.MobsSpawnCycle && !e.Immortal {
-			e.LifeTime--
-		}
-
-		if e.LifeTime > 0 {
-			mobsAlive = append(mobsAlive, e)
-		}
+	if core.FrameTick%emotes.NextSpawnTick == 0 && emotes.EmoteActive == nil {
+		emotes.SpawnRandom()
+		mobs.List[helpers.Random(0, len(mobs.List)-1)].Emote = emotes.EmoteActive
 	}
-	mobs.MobsAlive = mobsAlive
 
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	for _, e := range mobs.MobsAlive {
-		e.Draw(screen)
-	}
+	mobs.Draw(screen)
+	emotes.Draw(screen)
 }
 
 func setScreenArea() {
