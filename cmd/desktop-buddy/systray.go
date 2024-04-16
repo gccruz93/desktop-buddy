@@ -18,7 +18,7 @@ func onReady() {
 		menu.ShowMenu()
 	})
 
-	systray.AddMenuItem("v0.2.0 - @twpax", "v0.2.0 - @twpax").Disable()
+	systray.AddMenuItem("v0.2.1 - @twpax", "v0.2.1 - @twpax").Disable()
 
 	systray.AddMenuItem("Close", "Close").Click(func() {
 		core.Cfg.Save()
@@ -83,7 +83,9 @@ func onReady() {
 	}
 
 	systray.AddMenuItem("Spawn", "Spawn").Click(func() {
-		mobs.SpawnRandom(1)
+		go func() {
+			mobs.SpawnRandom(1)
+		}()
 	})
 }
 
